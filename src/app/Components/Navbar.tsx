@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { FaHotel, FaUser, FaBars, FaTimes } from 'react-icons/fa';
+import { FaHotel, FaUser, FaBars, FaTimes, FaEnvelope, FaBed, FaCalendarAlt, FaInfoCircle, FaConciergeBell } from 'react-icons/fa';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
@@ -11,6 +11,10 @@ const Navbar = () => {
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
+  };
+
+  const closeMenu = () => {
+    setIsMenuOpen(false);
   };
 
   useEffect(() => {
@@ -22,9 +26,29 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    if (isMenuOpen) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = 'auto';
+    }
+    
+    return () => {
+      document.body.style.overflow = 'auto';
+    };
+  }, [isMenuOpen]);
+
+  const navLinks = [
+    { href: '/bookings', label: 'Bookings', icon: <FaCalendarAlt className="h-5 w-5" /> },
+    { href: '/rooms', label: 'Rooms', icon: <FaBed className="h-5 w-5" /> },
+    { href: '/about', label: 'About', icon: <FaInfoCircle className="h-5 w-5" /> },
+    { href: '/services', label: 'Services', icon: <FaConciergeBell className="h-5 w-5" /> },
+    { href: '/contact', label: 'Contact', icon: <FaEnvelope className="h-5 w-5" /> },
+  ];
+
   return (
-    <nav className={`fixed w-full top-0 left-0 z-50 transition-all duration-300 ${
-      scrolled ? 'bg-white shadow-lg' : 'bg-white/90 backdrop-blur-sm'
+    <nav className={`fixed w-full top-0 left-0 z-50 transition-all duration-300 bg-white ${
+      scrolled ? 'shadow-lg' : ''
     }`}>
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
@@ -89,38 +113,80 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile menu with animation */}
+      {/* Mobile menu backdrop */}
+      {isMenuOpen && (
+        <div 
+          className="md:hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 transition-opacity duration-300"
+          onClick={closeMenu}
+        ></div>
+      )}
+
+      {/* Enhanced Mobile menu */}
       <div 
-        className={`md:hidden overflow-hidden transition-all duration-300 ease-in-out ${
-          isMenuOpen ? 'max-h-64 opacity-100' : 'max-h-0 opacity-0'
+        className={`md:hidden fixed top-0 right-0 h-screen w-[85%] max-w-sm bg-white shadow-2xl z-50 transform transition-all duration-400 ease-in-out ${
+          isMenuOpen ? 'translate-x-0' : 'translate-x-full'
         }`}
       >
-        <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 bg-gray-50">
-          {[
-            { href: '/bookings', label: 'Bookings' },
-            { href: '/rooms', label: 'Rooms' },
-            { href: '/about', label: 'About' },
-            { href: '/services', label: 'Services' },
-            { href: '/contact', label: 'Contact' },
-          ].map((link) => (
+        {/* Mobile menu header */}
+        <div className="p-4 bg-gradient-to-r from-blue-600 to-blue-800 flex items-center justify-between">
+          <div className="flex items-center">
+            <FaHotel className="h-6 w-6 text-white" />
+            <span className="ml-2 text-lg font-bold text-white">HotelManager</span>
+          </div>
+          <button 
+            onClick={closeMenu}
+            className="p-2 rounded-full bg-white/10 hover:bg-white/20 text-white transition-colors"
+          >
+            <FaTimes className="h-5 w-5" />
+          </button>
+        </div>
+        
+        {/* User profile for mobile */}
+        <div className="px-6 pt-6 pb-4 border-b border-gray-100">
+          <Link 
+            href="/login"
+            onClick={closeMenu}
+            className="flex items-center justify-center space-x-3 w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-base font-medium hover:shadow-lg transition-all shadow-md duration-300 transform hover:translate-y-[-2px]"
+          >
+            <FaUser className="h-4 w-4" />
+            <span>Login to your account</span>
+          </Link>
+        </div>
+
+        <div className="py-4 px-2 h-[calc(100%-170px)] overflow-y-auto">
+          {navLinks.map((link, index) => (
             <Link 
               key={link.href}
               href={link.href}
-              className={`block px-3 py-2 rounded-md text-base font-medium transition-colors ${
+              onClick={closeMenu}
+              className={`flex items-center mx-2 space-x-4 px-4 py-4 mb-3 rounded-xl text-base font-medium transition-all duration-300 ${
                 pathname === link.href 
-                  ? 'text-blue-600 bg-blue-50' 
-                  : 'text-gray-600 hover:text-blue-600 hover:bg-blue-50'
-              }`}
+                  ? 'text-blue-600 bg-blue-50 shadow-sm' 
+                  : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50/70'
+              } ${isMenuOpen ? 'animate-fadeSlideIn' : ''}`}
+              style={{ animationDelay: `${index * 100}ms` }}
             >
-              {link.label}
+              <div className={`p-2 rounded-lg ${
+                pathname === link.href 
+                  ? 'bg-blue-100 text-blue-600' 
+                  : 'bg-gray-100 text-blue-500'
+              }`}>
+                {link.icon}
+              </div>
+              <span className="font-medium">{link.label}</span>
+              {pathname === link.href && (
+                <div className="ml-auto bg-blue-600 w-2 h-2 rounded-full"></div>
+              )}
             </Link>
           ))}
-          <Link 
-            href="/login"
-            className="block mt-4 mx-2 px-4 py-2 bg-blue-600 text-white text-center rounded-md text-base font-medium hover:bg-blue-700 transition-colors"
-          >
-            Login
-          </Link>
+        </div>
+        
+        {/* Footer section */}
+        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-100 bg-gray-50">
+          <div className="text-center text-sm text-gray-500">
+            <p>© 2023 HotelManager</p>
+            <p className="mt-1">Premium hotel management system</p>
+          </div>
         </div>
       </div>
     </nav>
