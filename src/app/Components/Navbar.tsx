@@ -104,6 +104,7 @@ const Navbar = () => {
 
           {/* User profile and mobile menu button */}
           <div className="flex items-center">
+            {/* Desktop user profile */}
             <div className="hidden md:flex items-center ml-4">
               {user ? (
                 <div className="relative">
@@ -159,8 +160,39 @@ const Navbar = () => {
               )}
             </div>
 
-            {/* Mobile menu button */}
-            <div className="flex md:hidden ml-2">
+            {/* Mobile user profile and menu button */}
+            <div className="flex md:hidden items-center space-x-2">
+              {/* Mobile user profile */}
+              {user ? (
+                <button 
+                  onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                  className="flex items-center justify-center p-2"
+                >
+                  {user.profilePic ? (
+                    <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-blue-300">
+                      <Image 
+                        src={user.profilePic} 
+                        alt={user.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                      {user.name.charAt(0)}
+                    </div>
+                  )}
+                </button>
+              ) : (
+                <Link 
+                  href="/login" 
+                  className="p-2 text-blue-600"
+                >
+                  <FaUser className="h-5 w-5" />
+                </Link>
+              )}
+
+              {/* Mobile menu button */}
               <button
                 onClick={toggleMenu}
                 className="inline-flex items-center justify-center p-2 rounded-md text-gray-600 hover:text-blue-600 hover:bg-blue-50 transition-colors focus:outline-none"
