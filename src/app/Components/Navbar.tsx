@@ -1,13 +1,38 @@
 'use client';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
-import { FaHotel, FaUser, FaBars, FaTimes, FaEnvelope, FaBed, FaCalendarAlt, FaInfoCircle, FaConciergeBell } from 'react-icons/fa';
+import { useRouter, usePathname } from 'next/navigation';
+import { FaHotel, FaUser, FaBars, FaTimes, FaEnvelope, FaBed, FaCalendarAlt, FaInfoCircle, FaConciergeBell, FaSignOutAlt } from 'react-icons/fa';
+import Image from 'next/image';
 
 const Navbar = () => {
-  const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [scrolled, setScrolled] = useState(false);
+  const router = useRouter();
   const pathname = usePathname();
+  const [scrolled, setScrolled] = useState(false);
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const [user, setUser] = useState<any>(null);
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+
+  useEffect(() => {
+    // Check if user is logged in
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      try {
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+
+    const handleScroll = () => {
+      setScrolled(window.scrollY > 10);
+    };
+
+    window.addEventListener('scroll', handleScroll);
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, []);
 
   const toggleMenu = () => {
     setIsMenuOpen(!isMenuOpen);
@@ -17,26 +42,17 @@ const Navbar = () => {
     setIsMenuOpen(false);
   };
 
-  useEffect(() => {
-    const handleScroll = () => {
-      setScrolled(window.scrollY > 10);
-    };
-    
-    window.addEventListener('scroll', handleScroll);
-    return () => window.removeEventListener('scroll', handleScroll);
-  }, []);
+  const toggleUserMenu = () => {
+    setIsUserMenuOpen(!isUserMenuOpen);
+  };
 
-  useEffect(() => {
-    if (isMenuOpen) {
-      document.body.style.overflow = 'hidden';
-    } else {
-      document.body.style.overflow = 'auto';
-    }
-    
-    return () => {
-      document.body.style.overflow = 'auto';
-    };
-  }, [isMenuOpen]);
+  const handleLogout = () => {
+    localStorage.removeItem('user');
+    localStorage.removeItem('token');
+    setUser(null);
+    setIsUserMenuOpen(false);
+    router.push('/');
+  };
 
   const navLinks = [
     { href: '/bookings', label: 'Bookings', icon: <FaCalendarAlt className="h-5 w-5" /> },
@@ -89,13 +105,58 @@ const Navbar = () => {
           {/* User profile and mobile menu button */}
           <div className="flex items-center">
             <div className="hidden md:flex items-center ml-4">
-              <Link 
-                href="/login" 
-                className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm"
-              >
-                <FaUser className="h-4 w-4" />
-                <span className="font-medium">Login</span>
-              </Link>
+              {user ? (
+                <div className="relative">
+                  <button 
+                    onClick={toggleUserMenu}
+                    className="flex items-center space-x-2 p-1 rounded-full hover:bg-blue-50 transition-colors"
+                  >
+                    {user.profilePic ? (
+                      <div className="relative w-8 h-8 rounded-full overflow-hidden border-2 border-blue-300">
+                        <Image 
+                          src={user.profilePic} 
+                          alt={user.name}
+                          fill
+                          className="object-cover"
+                        />
+                      </div>
+                    ) : (
+                      <div className="w-8 h-8 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                        {user.name.charAt(0)}
+                      </div>
+                    )}
+                    <span className="text-sm font-medium">{user.name}</span>
+                  </button>
+                  
+                  {isUserMenuOpen && (
+                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                      <Link
+                        href="/profile"
+                        className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <FaUser className="mr-2" />
+                        View Profile
+                      </Link>
+                      <button
+                        onClick={handleLogout}
+                        className="flex w-full items-center px-4 py-2 text-sm text-gray-700 hover:bg-blue-50"
+                      >
+                        <FaSignOutAlt className="mr-2" />
+                        Sign out
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link 
+                  href="/login" 
+                  className="flex items-center space-x-2 px-4 py-2 bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm"
+                >
+                  <FaUser className="h-4 w-4" />
+                  <span className="font-medium">Login</span>
+                </Link>
+              )}
             </div>
 
             {/* Mobile menu button */}
@@ -143,49 +204,79 @@ const Navbar = () => {
         
         {/* User profile for mobile */}
         <div className="px-6 pt-6 pb-4 border-b border-gray-100">
-          <Link 
-            href="/login"
-            onClick={closeMenu}
-            className="flex items-center justify-center space-x-3 w-full py-3 bg-gradient-to-r from-blue-600 to-blue-700 text-white rounded-xl text-base font-medium hover:shadow-lg transition-all shadow-md duration-300 transform hover:translate-y-[-2px]"
-          >
-            <FaUser className="h-4 w-4" />
-            <span>Login to your account</span>
-          </Link>
-        </div>
-
-        <div className="py-4 px-2 h-[calc(100%-170px)] overflow-y-auto">
-          {navLinks.map((link, index) => (
-            <Link 
-              key={link.href}
-              href={link.href}
-              onClick={closeMenu}
-              className={`flex items-center mx-2 space-x-4 px-4 py-4 mb-3 rounded-xl text-base font-medium transition-all duration-300 ${
-                pathname === link.href 
-                  ? 'text-blue-600 bg-blue-50 shadow-sm' 
-                  : 'text-gray-700 hover:text-blue-600 hover:bg-blue-50/70'
-              } ${isMenuOpen ? 'animate-fadeSlideIn' : ''}`}
-              style={{ animationDelay: `${index * 100}ms` }}
-            >
-              <div className={`p-2 rounded-lg ${
-                pathname === link.href 
-                  ? 'bg-blue-100 text-blue-600' 
-                  : 'bg-gray-100 text-blue-500'
-              }`}>
-                {link.icon}
+          <div className="px-4 py-4 border-t border-gray-200">
+            {user ? (
+              <div className="flex flex-col">
+                <div className="flex items-center space-x-3 mb-3">
+                  {user.profilePic ? (
+                    <div className="relative w-10 h-10 rounded-full overflow-hidden">
+                      <Image 
+                        src={user.profilePic} 
+                        alt={user.name}
+                        fill
+                        className="object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white">
+                      {user.name.charAt(0)}
+                    </div>
+                  )}
+                  <span className="font-medium">{user.name}</span>
+                </div>
+                <div className="flex flex-col space-y-2 mt-2">
+                  <Link
+                    href="/profile"
+                    className="flex items-center text-sm text-gray-700 py-2 px-3 rounded hover:bg-blue-50"
+                    onClick={closeMenu}
+                  >
+                    <FaUser className="mr-2" />
+                    View Profile
+                  </Link>
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center text-sm text-red-600 py-2 px-3 rounded hover:bg-red-50"
+                  >
+                    <FaSignOutAlt className="mr-2" />
+                    Sign out
+                  </button>
+                </div>
               </div>
-              <span className="font-medium">{link.label}</span>
-              {pathname === link.href && (
-                <div className="ml-auto bg-blue-600 w-2 h-2 rounded-full"></div>
-              )}
-            </Link>
-          ))}
+            ) : (
+              <Link 
+                href="/login" 
+                className="flex items-center justify-center space-x-2 w-full px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors"
+                onClick={closeMenu}
+              >
+                <FaUser className="h-4 w-4" />
+                <span className="font-medium">Login / Register</span>
+              </Link>
+            )}
+          </div>
         </div>
         
-        {/* Footer section */}
-        <div className="absolute bottom-0 left-0 right-0 p-6 border-t border-gray-100 bg-gray-50">
-          <div className="text-center text-sm text-gray-500">
-            <p>© 2023 HotelManager</p>
-            <p className="mt-1">Premium hotel management system</p>
+        {/* Navigation Links for mobile */}
+        <div className="px-6 py-4">
+          <h3 className="text-xs uppercase text-gray-500 font-semibold px-3 mb-3">Navigation</h3>
+          <div className="space-y-1">
+            {navLinks.map((link) => (
+              <Link
+                key={link.href}
+                href={link.href}
+                className={`flex items-center px-3 py-3 rounded-md transition-colors ${
+                  pathname === link.href
+                    ? 'bg-blue-50 text-blue-600'
+                    : 'text-gray-700 hover:bg-gray-50 hover:text-blue-600'
+                }`}
+                onClick={closeMenu}
+              >
+                <span className="mr-3 text-gray-500">{link.icon}</span>
+                <span className="font-medium">{link.label}</span>
+                {pathname === link.href && (
+                  <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500"></span>
+                )}
+              </Link>
+            ))}
           </div>
         </div>
       </div>

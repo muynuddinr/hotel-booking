@@ -1,8 +1,10 @@
 'use client'
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 const Login = () => {
+  const router = useRouter();
   const [isLogin, setIsLogin] = useState(true);
   const [formData, setFormData] = useState({
     name: '',
@@ -14,6 +16,8 @@ const Login = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [apiError, setApiError] = useState<string | null>(null);
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
@@ -21,6 +25,15 @@ const Login = () => {
       ...prev,
       [name]: value
     }));
+    // Clear error when user starts typing
+    if (errors[name]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[name];
+        return newErrors;
+      });
+    }
+    setApiError(null);
   };
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -37,6 +50,15 @@ const Login = () => {
         setPreviewUrl(reader.result as string);
       };
       reader.readAsDataURL(file);
+      
+      // Clear error if there was one
+      if (errors.profilePic) {
+        setErrors(prev => {
+          const newErrors = { ...prev };
+          delete newErrors.profilePic;
+          return newErrors;
+        });
+      }
     }
   };
 
@@ -62,16 +84,84 @@ const Login = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (validateForm()) {
       setIsSubmitting(true);
-      // Simulate API call
-      setTimeout(() => {
-        console.log('Form submitted:', formData);
+      setApiError(null);
+      
+      try {
+        if (isLogin) {
+          // Handle login
+          const response = await fetch('/api/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: formData.email,
+              password: formData.password,
+            }),
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.message || 'Login failed');
+          }
+          
+          // Store token in localStorage or cookies (consider using a more secure approach)
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          
+          // Redirect to dashboard or home page
+          router.push('/');
+          
+        } else {
+          // Handle registration
+          const formDataToSend = new FormData();
+          formDataToSend.append('name', formData.name);
+          formDataToSend.append('email', formData.email);
+          formDataToSend.append('password', formData.password);
+          if (formData.profilePic) {
+            formDataToSend.append('profilePic', formData.profilePic);
+          }
+          
+          const response = await fetch('/api/auth/register', {
+            method: 'POST',
+            body: formDataToSend,
+          });
+          
+          const data = await response.json();
+          
+          if (!response.ok) {
+            throw new Error(data.message || 'Registration failed');
+          }
+          
+          // Store token in localStorage or cookies
+          localStorage.setItem('token', data.token);
+          localStorage.setItem('user', JSON.stringify(data.user));
+          
+          // After successful registration, show login form with success message
+          setIsLogin(true);
+          setApiError(null);
+          setSuccessMessage('Registration successful! Please sign in with your new account.');
+          // Clear form data
+          setFormData({
+            name: '',
+            email: '',
+            password: '',
+            confirmPassword: '',
+            profilePic: null
+          });
+          setPreviewUrl(null);
+        }
+      } catch (error) {
+        console.error('Authentication error:', error);
+        setApiError(error instanceof Error ? error.message : 'An unexpected error occurred');
+      } finally {
         setIsSubmitting(false);
-        // Reset form after submission if needed
-      }, 1500);
+      }
     }
   };
 
@@ -98,12 +188,29 @@ const Login = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => setIsLogin(!isLogin)}
+            onClick={() => {
+              setIsLogin(!isLogin);
+              setErrors({});
+              setApiError(null);
+              setSuccessMessage(null);
+            }}
             className="mt-3 text-indigo-600 hover:text-purple-600 font-medium transition-colors duration-300"
           >
             {isLogin ? 'Need an account? Register' : 'Already have an account? Login'}
           </motion.button>
         </div>
+        
+        {successMessage && (
+          <div className="bg-green-50 border border-green-200 text-green-600 px-4 py-3 rounded-md">
+            {successMessage}
+          </div>
+        )}
+        
+        {apiError && (
+          <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-md">
+            {apiError}
+          </div>
+        )}
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div className="rounded-md space-y-5">
