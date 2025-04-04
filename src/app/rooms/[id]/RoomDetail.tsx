@@ -1,8 +1,25 @@
 'use client'
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaBed, FaWifi, FaSnowflake, FaTv, FaGlassMartini, FaUsers } from 'react-icons/fa';
+
+interface Room {
+  _id: string;
+  id: string;
+  name: string;
+  description: string;
+  longDescription?: string;
+  price: number;
+  size?: number;
+  capacity: number;
+  amenities: string[];
+  image: string;
+  gallery?: string[];
+  status?: string;
+  maintenance?: boolean;
+  lastCleaned?: string;
+}
 
 // Mock data - in a real app, you would fetch this based on the ID
 const roomTypes = [
@@ -25,9 +42,39 @@ const roomTypes = [
   // Other room types would be listed here
 ];
 
+const formatPrice = (price: number) => {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    maximumFractionDigits: 0
+  }).format(price);
+};
+
 const RoomDetail: React.FC<{ id: string }> = ({ id }) => {
-  const room = roomTypes.find(room => room.id === id) || roomTypes[0]; // Fallback to first room if not found
-  
+  const [room, setRoom] = useState<Room | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchRoom = async () => {
+      try {
+        const response = await fetch(`/api/rooms/${id}`);
+        if (!response.ok) throw new Error('Room not found');
+        const data = await response.json();
+        setRoom(data);
+      } catch (err) {
+        setError('Failed to fetch room details');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRoom();
+  }, [id]);
+
+  if (loading) return <div>Loading...</div>;
+  if (error || !room) return <div>Error: {error}</div>;
+
   return (
     <div className="bg-gray-100 min-h-screen py-12">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -50,12 +97,15 @@ const RoomDetail: React.FC<{ id: string }> = ({ id }) => {
               </div>
               
               <div className="mt-4 md:mt-0 md:ml-8 bg-blue-50 p-4 rounded-lg">
-                <div className="text-3xl font-bold text-blue-600">${room.price}<span className="text-base text-gray-500">/night</span></div>
+                <div className="text-3xl font-bold text-blue-600">
+                  {formatPrice(room.price)}
+                  <span className="text-sm text-gray-500">/night</span>
+                </div>
                 <Link 
-                  href={`/book?room=${room.id}`} 
+                  href={`/rooms/${room._id}`}
                   className="mt-4 block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md text-center transition-colors duration-300"
                 >
-                  Book This Room
+                  View Details
                 </Link>
               </div>
             </div>
@@ -82,7 +132,7 @@ const RoomDetail: React.FC<{ id: string }> = ({ id }) => {
             <div className="mt-8">
               <h2 className="text-xl font-bold text-gray-900 mb-4">Amenities</h2>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                {room.amenities.map((amenity, index) => (
+                {room.amenities.map((amenity: string, index: number) => (
                   <div key={index} className="flex items-center">
                     <svg className="h-5 w-5 text-blue-600 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />

@@ -1,5 +1,5 @@
- 'use client';
-import React, { useState } from 'react';
+'use client';
+import React, { useState, useEffect } from 'react';
 import { 
   FaSearch, 
   FaEnvelope, 
@@ -13,7 +13,7 @@ import {
 } from 'react-icons/fa';
 
 interface Subscriber {
-  id: number;
+  _id: string;
   email: string;
   name: string | null;
   dateSubscribed: string;
@@ -37,18 +37,35 @@ export default function NewsletterPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubscriber, setSelectedSubscriber] = useState<Subscriber | null>(null);
   const [selectedNewsletter, setSelectedNewsletter] = useState<Newsletter | null>(null);
+  const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  // Mock data for subscribers
-  const subscribers: Subscriber[] = [
-    { id: 1, email: 'john.smith@example.com', name: 'John Smith', dateSubscribed: '2023-05-15', status: 'Active', openRate: 75, source: 'Website' },
-    { id: 2, email: 'emily.johnson@example.com', name: 'Emily Johnson', dateSubscribed: '2023-06-22', status: 'Active', openRate: 92, source: 'Booking Confirmation' },
-    { id: 3, email: 'michael.wong@example.com', name: 'Michael Wong', dateSubscribed: '2023-07-03', status: 'Active', openRate: 45, source: 'Website' },
-    { id: 4, email: 'sarah.williams@example.com', name: null, dateSubscribed: '2023-08-18', status: 'Unsubscribed', openRate: 12, source: 'Footer Form' },
-    { id: 5, email: 'david.garcia@example.com', name: 'David Garcia', dateSubscribed: '2023-09-10', status: 'Active', openRate: 88, source: 'Check-in' },
-    { id: 6, email: 'jennifer.lee@example.com', name: 'Jennifer Lee', dateSubscribed: '2023-09-25', status: 'Active', openRate: 65, source: 'Website' },
-    { id: 7, email: 'robert.johnson@example.com', name: 'Robert Johnson', dateSubscribed: '2023-10-05', status: 'Active', openRate: 71, source: 'Booking Confirmation' },
-    { id: 8, email: 'lisa.brown@example.com', name: null, dateSubscribed: '2023-10-15', status: 'Unsubscribed', openRate: 0, source: 'Footer Form' },
-  ];
+  useEffect(() => {
+    const fetchSubscribers = async () => {
+      try {
+        const response = await fetch('/api/admin/newsletter', {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('token')}`
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch subscribers');
+        }
+        
+        const data = await response.json();
+        setSubscribers(data.subscribers);
+      } catch (err) {
+        setError('Failed to load subscribers');
+        console.error('Error:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchSubscribers();
+  }, []);
 
   // Mock data for newsletters
   const newsletters: Newsletter[] = [
@@ -260,7 +277,7 @@ export default function NewsletterPage() {
                   </thead>
                   <tbody className="divide-y divide-gray-200 bg-white">
                     {filteredSubscribers.map((subscriber) => (
-                      <tr key={subscriber.id}>
+                      <tr key={subscriber._id}>
                         <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                           {subscriber.email}
                         </td>
@@ -268,7 +285,7 @@ export default function NewsletterPage() {
                           {subscriber.name || '-'}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {new Date(subscriber.dateSubscribed).toLocaleDateString()}
+                          {new Date(subscriber.dateSubscribed).toLocaleDateString('en-US')}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm">
                           <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${
@@ -358,7 +375,7 @@ export default function NewsletterPage() {
                           </span>
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
-                          {newsletter.dateSent ? new Date(newsletter.dateSent).toLocaleDateString() : '-'}
+                          {newsletter.dateSent ? new Date(newsletter.dateSent).toLocaleDateString('en-US') : '-'}
                         </td>
                         <td className="whitespace-nowrap px-3 py-4 text-sm text-gray-500">
                           {newsletter.recipients > 0 ? newsletter.recipients.toLocaleString() : '-'}
@@ -485,7 +502,9 @@ export default function NewsletterPage() {
                       </div>
                       <div className="sm:col-span-1">
                         <dt className="text-sm font-medium text-gray-500">Date Subscribed</dt>
-                        <dd className="mt-1 text-sm text-gray-900">{new Date(selectedSubscriber.dateSubscribed).toLocaleDateString()}</dd>
+                        <dd className="mt-1 text-sm text-gray-900">
+                          {new Date(selectedSubscriber.dateSubscribed).toLocaleDateString('en-US')}
+                        </dd>
                       </div>
                       <div className="sm:col-span-1">
                         <dt className="text-sm font-medium text-gray-500">Open Rate</dt>
@@ -552,7 +571,7 @@ export default function NewsletterPage() {
                       <div className="sm:col-span-1">
                         <dt className="text-sm font-medium text-gray-500">Date Sent</dt>
                         <dd className="mt-1 text-sm text-gray-900">
-                          {selectedNewsletter.dateSent ? new Date(selectedNewsletter.dateSent).toLocaleDateString() : '-'}
+                          {selectedNewsletter.dateSent ? new Date(selectedNewsletter.dateSent).toLocaleDateString('en-US') : '-'}
                         </dd>
                       </div>
                       <div className="sm:col-span-1">

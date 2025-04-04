@@ -84,11 +84,38 @@ const Footer: React.FC = () => {
             <p className="text-gray-400 mb-4">
               Subscribe to our newsletter to receive updates and special offers.
             </p>
-            <form className="flex flex-col space-y-2">
+            <form onSubmit={async (e) => {
+              e.preventDefault();
+              const form = e.target as HTMLFormElement;
+              const email = (form.elements.namedItem('email') as HTMLInputElement).value;
+              
+              try {
+                const response = await fetch('/api/newsletter/subscribe', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({ email }),
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                  alert('Successfully subscribed to newsletter!');
+                  form.reset();
+                } else {
+                  alert(data.message || 'Failed to subscribe. Please try again.');
+                }
+              } catch (error) {
+                alert('An error occurred. Please try again later.');
+              }
+            }} className="flex flex-col space-y-2">
               <input 
                 type="email" 
+                name="email"
                 placeholder="Your email address" 
                 className="px-4 py-2 bg-gray-800 text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                required
               />
               <button 
                 type="submit"

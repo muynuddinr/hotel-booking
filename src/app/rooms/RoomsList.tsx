@@ -1,7 +1,20 @@
 'use client'
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+
+interface Room {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  capacity: number;
+  amenities: string[];
+  image: string;
+  status?: string;
+  maintenance?: boolean;
+  lastCleaned?: string;
+}
 
 // Mock data for room types - in a real app, you would fetch this from an API
 const roomTypes = [
@@ -44,6 +57,51 @@ const roomTypes = [
 ];
 
 const RoomsList: React.FC = () => {
+  const [rooms, setRooms] = useState<Room[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const response = await fetch('/api/rooms');
+        const data = await response.json();
+        setRooms(data);
+      } catch (err) {
+        setError('Failed to fetch rooms');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRooms();
+  }, []);
+
+  // Function to convert price to INR format
+  const formatPrice = (price: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      maximumFractionDigits: 0
+    }).format(price);
+  };
+
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center text-red-600">
+        {error}
+      </div>
+    );
+  }
+
   return (
     <div className="bg-gradient-to-b from-gray-50 to-gray-100 min-h-screen py-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -57,8 +115,8 @@ const RoomsList: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {roomTypes.map((room) => (
-            <div key={room.id} className="bg-white rounded-xl shadow-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
+          {rooms.map((room) => (
+            <div key={`room-${room._id}`} className="bg-white rounded-xl shadow-xl overflow-hidden transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl">
               <div className="relative h-48">
                 <Image 
                   src={room.image} 
@@ -67,7 +125,7 @@ const RoomsList: React.FC = () => {
                   className="object-cover hover:opacity-90 transition-opacity duration-300"
                 />
                 <div className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm px-3 py-1 rounded-full">
-                  <span className="text-lg font-bold text-blue-600">${room.price}</span>
+                  <span className="text-lg font-bold text-blue-600">{formatPrice(room.price)}</span>
                   <span className="text-xs text-gray-500">/night</span>
                 </div>
               </div>
@@ -85,25 +143,22 @@ const RoomsList: React.FC = () => {
                 <div className="mt-3">
                   <div className="flex flex-wrap gap-1 mt-2">
                     {room.amenities.map((amenity, index) => (
-                      <span key={index} className="inline-block px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-lg font-medium">
+                      <span 
+                        key={`${room._id}-amenity-${index}`}
+                        className="inline-block px-2 py-1 text-xs bg-blue-50 text-blue-700 rounded-lg font-medium"
+                      >
                         {amenity}
                       </span>
                     ))}
                   </div>
                 </div>
                 
-                <div className="mt-6 flex space-x-2">
+                <div className="mt-6">
                   <Link 
-                    href={`/rooms/${room.id}`} 
-                    className="flex-1 bg-white hover:bg-gray-50 text-blue-600 font-semibold border-2 border-blue-600 py-2 px-4 rounded-lg text-center transition-colors duration-300 text-sm"
+                    href={`/rooms/${room._id}`}
+                    className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center font-semibold py-2 px-4 rounded-md transition-colors duration-300"
                   >
                     View Details
-                  </Link>
-                  <Link 
-                    href={`/book?room=${room.id}`} 
-                    className="flex-1 bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg text-center transition-all duration-300 shadow-md hover:shadow-lg text-sm"
-                  >
-                    Book Now
                   </Link>
                 </div>
               </div>
@@ -115,4 +170,4 @@ const RoomsList: React.FC = () => {
   );
 };
 
-export default RoomsList; 
+export default RoomsList;

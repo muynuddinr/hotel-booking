@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
   FaSearch, 
   FaBed, 
@@ -11,28 +11,49 @@ import {
   FaBroom,
   FaFilter
 } from 'react-icons/fa';
+import RoomForm from './RoomForm';
+
+interface Room {
+  id: string | number;
+  type: string;
+  floor: string;
+  capacity: number;
+  price?: number;
+  status: string;
+  maintenance: boolean;
+  lastCleaned: string;
+}
 
 export default function RoomsPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('All');
+  const [showForm, setShowForm] = useState(false);
+  const [rooms, setRooms] = useState<Room[]>([]);
   
-  // Mock data for rooms
-  const rooms = [
-    { id: 101, type: 'Standard Twin Room', floor: '1st Floor', capacity: 2, price: 159, status: 'Available', maintenance: false, lastCleaned: '2023-11-15' },
-    { id: 102, type: 'Standard Twin Room', floor: '1st Floor', capacity: 2, status: 'Occupied', maintenance: false, lastCleaned: '2023-11-14' },
-    { id: 201, type: 'Deluxe King Room', floor: '2nd Floor', capacity: 2, price: 199, status: 'Available', maintenance: false, lastCleaned: '2023-11-15' },
-    { id: 202, type: 'Deluxe King Room', floor: '2nd Floor', capacity: 2, price: 199, status: 'Occupied', maintenance: false, lastCleaned: '2023-11-13' },
-    { id: 203, type: 'Family Room', floor: '2nd Floor', capacity: 4, price: 249, status: 'Available', maintenance: false, lastCleaned: '2023-11-15' },
-    { id: 301, type: 'Deluxe King Room', floor: '3rd Floor', capacity: 2, price: 199, status: 'Occupied', maintenance: false, lastCleaned: '2023-11-13' },
-    { id: 302, type: 'Deluxe King Room', floor: '3rd Floor', capacity: 2, price: 199, status: 'Maintenance', maintenance: true, lastCleaned: '2023-11-10' },
-    { id: 401, type: 'Executive Suite', floor: '4th Floor', capacity: 2, price: 299, status: 'Available', maintenance: false, lastCleaned: '2023-11-15' },
-    { id: 402, type: 'Executive Suite', floor: '4th Floor', capacity: 2, price: 299, status: 'Occupied', maintenance: false, lastCleaned: '2023-11-12' },
-    { id: 501, type: 'Presidential Suite', floor: '5th Floor', capacity: 4, price: 499, status: 'Available', maintenance: false, lastCleaned: '2023-11-15' },
-  ];
+  useEffect(() => {
+    fetchRooms();
+  }, []);
+
+  const fetchRooms = async () => {
+    try {
+      const response = await fetch('/api/rooms');
+      if (response.ok) {
+        const data = await response.json();
+        setRooms(data);
+      }
+    } catch (error) {
+      console.error('Failed to fetch rooms:', error);
+    }
+  };
+
+  const handleAddRoom = (newRoom: any) => {
+    setRooms([...rooms, newRoom]);
+    setShowForm(false);
+  };
 
   // Filter rooms based on search and status filter
   const filteredRooms = rooms.filter(room => {
-    const matchesSearch = room.id.toString().includes(searchTerm) || 
+    const matchesSearch = room.id?.toString().toLowerCase().includes(searchTerm.toLowerCase()) || 
                          room.type.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesFilter = filterStatus === 'All' || room.status === filterStatus;
     return matchesSearch && matchesFilter;
@@ -64,6 +85,7 @@ export default function RoomsPage() {
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
           <button
             type="button"
+            onClick={() => setShowForm(true)}
             className="inline-flex items-center justify-center rounded-md border border-transparent bg-blue-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 sm:w-auto"
           >
             <FaPlus className="mr-2 -ml-1 h-4 w-4" />
@@ -71,6 +93,8 @@ export default function RoomsPage() {
           </button>
         </div>
       </div>
+      
+      {showForm && <RoomForm onClose={() => setShowForm(false)} onSubmit={handleAddRoom} />}
       
       {/* Room status summary */}
       <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -85,7 +109,7 @@ export default function RoomsPage() {
                   <dt className="text-sm font-medium text-gray-500 truncate">Available Rooms</dt>
                   <dd>
                     <div className="text-lg font-medium text-gray-900">
-                      {rooms.filter(room => room.status === 'Available').length}
+                      {rooms.filter((room: any) => room.status === 'Available').length}
                     </div>
                   </dd>
                 </dl>
@@ -105,7 +129,7 @@ export default function RoomsPage() {
                   <dt className="text-sm font-medium text-gray-500 truncate">Occupied Rooms</dt>
                   <dd>
                     <div className="text-lg font-medium text-gray-900">
-                      {rooms.filter(room => room.status === 'Occupied').length}
+                      {rooms.filter((room: any) => room.status === 'Occupied').length}
                     </div>
                   </dd>
                 </dl>
@@ -125,7 +149,7 @@ export default function RoomsPage() {
                   <dt className="text-sm font-medium text-gray-500 truncate">Maintenance</dt>
                   <dd>
                     <div className="text-lg font-medium text-gray-900">
-                      {rooms.filter(room => room.status === 'Maintenance').length}
+                      {rooms.filter((room: any) => room.status === 'Maintenance').length}
                     </div>
                   </dd>
                 </dl>
@@ -225,7 +249,7 @@ export default function RoomsPage() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
-                  {filteredRooms.map((room) => (
+                  {filteredRooms.map((room: any) => (
                     <tr key={room.id}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                         {room.id}

@@ -201,7 +201,14 @@ const Homepage: React.FC = () => {
                 <div className="p-6">
                   <div className="flex justify-between items-start">
                     <h3 className="text-xl font-bold text-gray-900">{room.name}</h3>
-                    <div className="text-lg font-bold text-blue-600">${room.price}<span className="text-sm text-gray-500">/night</span></div>
+                    <div className="text-lg font-bold text-blue-600">
+                      {new Intl.NumberFormat('en-IN', {
+                        style: 'currency',
+                        currency: 'INR',
+                        maximumFractionDigits: 0
+                      }).format(room.price)}
+                      <span className="text-sm text-gray-500">/night</span>
+                    </div>
                   </div>
                   <p className="mt-2 text-gray-600">{room.description}</p>
                   <div className="mt-4 flex justify-between items-center">

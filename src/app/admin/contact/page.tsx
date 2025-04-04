@@ -1,9 +1,9 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { FaSearch, FaEye, FaTrash, FaSort, FaFilter, FaReply, FaCheck, FaEnvelope } from 'react-icons/fa';
 
 interface ContactSubmission {
-  id: number;
+  _id: string;
   name: string;
   email: string;
   phone: string;
@@ -17,18 +17,26 @@ export default function ContactPage() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedSubmission, setSelectedSubmission] = useState<ContactSubmission | null>(null);
   const [filter, setFilter] = useState('All');
+  const [contactSubmissions, setContactSubmissions] = useState<ContactSubmission[]>([]);
+  const [loading, setLoading] = useState(true);
   
-  // Mock data for contact submissions
-  const contactSubmissions: ContactSubmission[] = [
-    { id: 1, name: 'John Smith', email: 'john.smith@example.com', phone: '+1 (234) 567-8901', subject: 'Inquiry', message: 'I would like to know if you have any rooms available for the weekend of October 15th.', status: 'New', dateSubmitted: '2023-10-15T14:30:00' },
-    { id: 2, name: 'Emily Johnson', email: 'emily.johnson@example.com', phone: '+1 (345) 678-9012', subject: 'Support', message: 'I need to modify my reservation for next week. Can someone help me with this?', status: 'Responded', dateSubmitted: '2023-10-14T09:15:00' },
-    { id: 3, name: 'Michael Wong', email: 'michael.wong@example.com', phone: '+65 9876 5432', subject: 'Feedback', message: 'I recently stayed at your hotel and wanted to provide some feedback about my experience.', status: 'New', dateSubmitted: '2023-10-13T16:45:00' },
-    { id: 4, name: 'Sarah Williams', email: 'sarah.williams@example.com', phone: '+1 (456) 789-0123', subject: 'Inquiry', message: 'Do you offer any special packages for honeymoon couples?', status: 'Archived', dateSubmitted: '2023-10-10T11:20:00' },
-    { id: 5, name: 'Robert Johnson', email: 'robert.johnson@example.com', phone: '+1 (567) 890-1234', subject: 'Support', message: 'I\'m having issues with the online booking system. It keeps showing an error when I try to complete my reservation.', status: 'New', dateSubmitted: '2023-10-12T13:10:00' },
-    { id: 6, name: 'Jennifer Lee', email: 'jennifer.lee@example.com', phone: '+82 10-1234-5678', subject: 'Feedback', message: 'Thank you for the wonderful stay last weekend. The staff was incredibly helpful!', status: 'Responded', dateSubmitted: '2023-10-09T15:30:00' },
-    { id: 7, name: 'David Garcia', email: 'david.garcia@example.com', phone: '+34 612 345 678', subject: 'Inquiry', message: 'I\'m interested in booking your conference room for a corporate event. Can you provide details about the capacity and available facilities?', status: 'New', dateSubmitted: '2023-10-11T10:05:00' },
-    { id: 8, name: 'Lisa Brown', email: 'lisa.brown@example.com', phone: '+1 (678) 901-2345', subject: 'Support', message: 'I need to cancel my reservation due to an emergency. What is your cancellation policy?', status: 'Responded', dateSubmitted: '2023-10-08T09:45:00' },
-  ];
+  useEffect(() => {
+    const fetchContacts = async () => {
+      try {
+        const response = await fetch('/api/contact');
+        if (response.ok) {
+          const data = await response.json();
+          setContactSubmissions(data);
+        }
+      } catch (error) {
+        console.error('Error fetching contacts:', error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchContacts();
+  }, []);
 
   // Filter submissions based on search term and status filter
   const filteredSubmissions = contactSubmissions.filter(submission => 
@@ -44,7 +52,7 @@ export default function ContactPage() {
   };
 
   // Function to handle mark as responded
-  const handleMarkAsResponded = (id: number) => {
+  const handleMarkAsResponded = (id: string) => {
     // In a real application, this would update the database
     console.log(`Marked submission ${id} as responded`);
   };
@@ -151,7 +159,7 @@ export default function ContactPage() {
                 </thead>
                 <tbody className="divide-y divide-gray-200 bg-white">
                   {filteredSubmissions.map((submission) => (
-                    <tr key={submission.id} className={submission.status === 'New' ? 'bg-blue-50' : ''}>
+                    <tr key={submission._id} className={submission.status === 'New' ? 'bg-blue-50' : ''}>
                       <td className="whitespace-nowrap py-4 pl-4 pr-3 text-sm font-medium text-gray-900 sm:pl-6">
                         {submission.name}
                       </td>
@@ -180,7 +188,7 @@ export default function ContactPage() {
                           </button>
                           {submission.status !== 'Responded' && (
                             <button
-                              onClick={() => handleMarkAsResponded(submission.id)}
+                              onClick={() => handleMarkAsResponded(submission._id)}
                               className="text-green-600 hover:text-green-900"
                               title="Mark as Responded"
                             >
@@ -317,7 +325,7 @@ export default function ContactPage() {
                   <button
                     type="button"
                     className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-green-600 text-base font-medium text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 sm:ml-3 sm:w-auto sm:text-sm"
-                    onClick={() => handleMarkAsResponded(selectedSubmission.id)}
+                    onClick={() => handleMarkAsResponded(selectedSubmission._id)}
                   >
                     <FaReply className="mr-2 h-4 w-4" />
                     Mark as Responded
