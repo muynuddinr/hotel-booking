@@ -19,10 +19,23 @@ const mockRooms = [
   // Add more rooms here
 ];
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
     await connectDB();
-    const rooms = await Room.find({});
+    const { searchParams } = new URL(request.url);
+    const featured = searchParams.get('featured');
+
+    let query = {};
+    if (featured === 'true') {
+      // You might want to add a featured field to your Room model
+      // For now, we'll just get the most expensive rooms
+      const rooms = await Room.find()
+        .sort({ price: -1 })
+        .limit(3);
+      return NextResponse.json(rooms);
+    }
+
+    const rooms = await Room.find(query);
     return NextResponse.json(rooms);
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch rooms' }, { status: 500 });

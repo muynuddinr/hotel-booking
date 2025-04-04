@@ -20,7 +20,8 @@ export default function RoomForm({ onClose, onSubmit }: RoomFormProps) {
     image: '',
     status: 'Available',
     maintenance: false,
-    lastCleaned: new Date().toISOString().split('T')[0]
+    lastCleaned: new Date().toISOString().split('T')[0],
+    featured: false,
   });
 
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -248,6 +249,19 @@ export default function RoomForm({ onClose, onSubmit }: RoomFormProps) {
             >
               + Add Another Amenity
             </button>
+          </div>
+
+          <div className="flex items-center mt-4">
+            <input
+              type="checkbox"
+              id="featured"
+              checked={formData.featured}
+              onChange={(e) => setFormData({...formData, featured: e.target.checked})}
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+            />
+            <label htmlFor="featured" className="ml-2 block text-sm text-gray-900">
+              Feature this room on homepage
+            </label>
           </div>
 
           <div className="flex justify-end space-x-2 mt-6">

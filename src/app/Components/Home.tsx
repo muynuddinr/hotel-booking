@@ -1,11 +1,86 @@
 'use client';
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
 import { FaCalendarAlt, FaConciergeBell, FaUtensils, FaBed, FaSpa, FaWifi, FaShieldAlt, FaArrowRight, FaQuoteLeft } from 'react-icons/fa';
 
+interface Room {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  image: string;
+  type: string;
+}
+
 const Homepage: React.FC = () => {
+  const [featuredRooms, setFeaturedRooms] = useState<Room[]>([]);
+
+  useEffect(() => {
+    const fetchFeaturedRooms = async () => {
+      try {
+        const response = await fetch('/api/rooms?featured=true');
+        if (response.ok) {
+          const data = await response.json();
+          // Get the first 3 rooms to display as featured
+          setFeaturedRooms(data.slice(0, 3));
+        }
+      } catch (error) {
+        console.error('Failed to fetch featured rooms:', error);
+      }
+    };
+
+    fetchFeaturedRooms();
+  }, []);
+
+  // Add this section in your JSX where you want to display featured rooms
+  const FeaturedRoomsSection = () => (
+    <section className="py-16 bg-gray-50">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="text-center">
+          <h2 className="text-3xl font-bold text-gray-900">Featured Rooms</h2>
+          <p className="mt-4 text-lg text-gray-600">Experience luxury in our carefully selected accommodations</p>
+        </div>
+
+        <div className="mt-12 grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
+          {featuredRooms.map((room) => (
+            <motion.div
+              key={room._id}
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="bg-white rounded-lg shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+            >
+              <div className="relative h-48">
+                <Image
+                  src={room.image}
+                  alt={room.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
+              <div className="p-6">
+                <h3 className="text-xl font-bold text-gray-900">{room.name}</h3>
+                <p className="mt-2 text-gray-600 line-clamp-2">{room.description}</p>
+                <div className="mt-4 flex items-center justify-between">
+                  <span className="text-2xl font-bold text-blue-600">₹{room.price}</span>
+                  <Link
+                    href={`/rooms/${room._id}`}
+                    className="inline-flex items-center text-blue-600 hover:text-blue-700"
+                  >
+                    View Details
+                    <FaArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </div>
+              </div>
+            </motion.div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+
   return (
     <div className="min-h-screen">
       {/* Hero Section */}
@@ -152,95 +227,7 @@ const Homepage: React.FC = () => {
       </div>
 
       {/* Featured Rooms Section */}
-      <div className="py-20 bg-white">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900">Featured Rooms</h2>
-            <p className="mt-4 text-xl text-gray-600 max-w-3xl mx-auto">
-              Discover our carefully designed rooms and suites for an unforgettable stay.
-            </p>
-          </div>
-
-          <div className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-8">
-            {[
-              {
-                name: 'Deluxe King Room',
-                image: 'https://images.unsplash.com/photo-1590490360182-c33d57733427?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80',
-                price: 199,
-                description: 'Spacious room with king-sized bed, en-suite bathroom, and city view.'
-              },
-              {
-                name: 'Executive Suite',
-                image: 'https://images.unsplash.com/photo-1582719508461-905c673771fd?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80',
-                price: 299,
-                description: 'Luxurious suite with separate living area, king-sized bed, and premium amenities.'
-              },
-              {
-                name: 'Family Room',
-                image: 'https://images.unsplash.com/photo-1566665797739-1674de7a421a?ixlib=rb-4.0.3&auto=format&fit=crop&w=1950&q=80',
-                price: 249,
-                description: 'Perfect for families with two queen beds and extra space for children.'
-              }
-            ].map((room, index) => (
-              <motion.div 
-                key={index}
-                initial={{ opacity: 0, scale: 0.95 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-                viewport={{ once: true }}
-                className="bg-white rounded-lg overflow-hidden shadow-md hover:shadow-xl transition-all duration-300"
-              >
-                <div className="relative h-48">
-                  <Image 
-                    src={room.image} 
-                    alt={room.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-                <div className="p-6">
-                  <div className="flex justify-between items-start">
-                    <h3 className="text-xl font-bold text-gray-900">{room.name}</h3>
-                    <div className="text-lg font-bold text-blue-600">
-                      {new Intl.NumberFormat('en-IN', {
-                        style: 'currency',
-                        currency: 'INR',
-                        maximumFractionDigits: 0
-                      }).format(room.price)}
-                      <span className="text-sm text-gray-500">/night</span>
-                    </div>
-                  </div>
-                  <p className="mt-2 text-gray-600">{room.description}</p>
-                  <div className="mt-4 flex justify-between items-center">
-                    <Link 
-                      href={`/rooms/${index + 1}`} 
-                      className="text-blue-600 hover:text-blue-800 font-medium flex items-center"
-                    >
-                      <span>View Details</span>
-                      <FaArrowRight className="ml-1 h-3 w-3" />
-                    </Link>
-                    <Link 
-                      href={`/book?room=${index + 1}`} 
-                      className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm transition-colors duration-300"
-                    >
-                      Book Now
-                    </Link>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-
-          <div className="mt-12 text-center">
-            <Link 
-              href="/rooms"
-              className="inline-flex items-center px-6 py-3 border border-blue-600 text-blue-600 hover:bg-blue-50 rounded-md text-base font-medium transition-colors duration-300"
-            >
-              View All Rooms <FaArrowRight className="ml-2 h-4 w-4" />
-            </Link>
-          </div>
-        </div>
-      </div>
+      <FeaturedRoomsSection />
 
       {/* Testimonials Section - UPDATED VERSION */}
       <div className="py-20 bg-gray-50">
