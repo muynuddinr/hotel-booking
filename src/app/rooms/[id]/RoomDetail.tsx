@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { FaBed, FaWifi, FaSnowflake, FaTv, FaGlassMartini, FaUsers } from 'react-icons/fa';
+import { useRouter } from 'next/navigation';
 
 interface Room {
   _id: string;
@@ -51,6 +52,7 @@ const formatPrice = (price: number) => {
 };
 
 const RoomDetail: React.FC<{ id: string }> = ({ id }) => {
+  const router = useRouter();
   const [room, setRoom] = useState<Room | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -74,6 +76,18 @@ const RoomDetail: React.FC<{ id: string }> = ({ id }) => {
 
   if (loading) return <div>Loading...</div>;
   if (error || !room) return <div>Error: {error}</div>;
+
+  const handlePaymentClick = () => {
+    // Check if user is logged in by looking for token in localStorage
+    const token = localStorage.getItem('token');
+    if (!token) {
+      // Redirect to login page with return URL
+      router.push(`/login?redirect=/rooms/${id}`);
+      return;
+    }
+    // If logged in, redirect to checkout page
+    router.push(`/checkout/${id}`);
+  };
 
   return (
     <div className="bg-gray-100 min-h-screen py-12">
@@ -101,12 +115,12 @@ const RoomDetail: React.FC<{ id: string }> = ({ id }) => {
                   {formatPrice(room.price)}
                   <span className="text-sm text-gray-500">/night</span>
                 </div>
-                <Link 
-                  href={`/rooms/${room._id}`}
+                <button 
+                  onClick={handlePaymentClick}
                   className="mt-4 block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md text-center transition-colors duration-300"
                 >
-                  make payment
-                </Link>
+                  Make Payment
+                </button>
               </div>
             </div>
             
@@ -172,4 +186,4 @@ const RoomDetail: React.FC<{ id: string }> = ({ id }) => {
   );
 };
 
-export default RoomDetail; 
+export default RoomDetail;
