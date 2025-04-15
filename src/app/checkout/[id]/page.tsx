@@ -155,19 +155,26 @@ export default function Checkout({ params }: CheckoutProps) {
       return;
     }
     
-    setIsProcessing(true);
-    setPaymentError(null);
-
-    // Simulate payment processing
-    setTimeout(() => {
-      setIsProcessing(false);
-      setIsSuccess(true);
-      
-      // Redirect to confirmation page after 2 seconds
-      setTimeout(() => {
-        router.push('/bookings');
-      }, 2500);
-    }, 3000);
+    // Create booking data to pass to the processing page
+    const bookingData = {
+      roomId,
+      roomName: room.name,
+      checkIn: checkIn.toISOString(),
+      checkOut: checkOut.toISOString(),
+      guests,
+      totalPrice,
+      taxAmount,
+      serviceCharge,
+      discount,
+      grandTotal,
+      cardLast4: cardNumber.slice(-4)
+    };
+    
+    // Store booking data in localStorage to access it on the processing page
+    localStorage.setItem('pendingBooking', JSON.stringify(bookingData));
+    
+    // Redirect to payment processing page
+    router.push(`/payment-processing?ref=${Math.random().toString(36).substring(2, 10)}`);
   };
 
   const formatPrice = (price: number) => {
