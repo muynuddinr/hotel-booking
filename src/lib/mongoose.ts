@@ -1,26 +1,18 @@
 import mongoose from 'mongoose';
 
-// Update type declaration to match actual usage
-declare global {
-  var mongoose: {
-    conn: typeof mongoose | null;
-    promise: Promise<typeof mongoose> | null;
-  } | undefined;
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  throw new Error('Please define the MONGODB_URI environment variable');
 }
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/hotel-management';
-
-let cached = global.mongoose;
+let cached: { conn: typeof mongoose | null; promise: Promise<typeof mongoose> | null } = (global as any).mongoose;
 
 if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
+  cached = (global as any).mongoose = { conn: null, promise: null };
 }
 
 async function connectDB() {
-  if (!cached) {
-    cached = global.mongoose = { conn: null, promise: null };
-  }
-
   if (cached.conn) {
     return cached.conn;
   }
@@ -30,13 +22,17 @@ async function connectDB() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
-      return mongoose;
-    }) as any;
+    cached.promise = mongoose.connect(MONGODB_URI!);
   }
 
-  cached.conn = await cached.promise;
+  try {
+    cached.conn = await cached.promise;
+  } catch (e) {
+    cached.promise = null;
+    throw e;
+  }
+
   return cached.conn;
 }
 
-export default connectDB; 
+export default connectDB;

@@ -69,10 +69,10 @@ export async function POST(req: NextRequest) {
     });
     
   } catch (error) {
-    console.error('Login error:', error);
+    console.error('Login error details:', error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }
-} 
+}

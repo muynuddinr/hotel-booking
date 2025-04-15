@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import connectDB from '@/lib/mongoose';
 import User from '@/models/User';
-import { fileToBuffer } from '@/lib/upload';
 import jwt from 'jsonwebtoken';
+import { fileToBuffer } from '@/lib/upload';
 
 const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
@@ -35,43 +35,51 @@ export async function POST(req: NextRequest) {
       );
     }
     
-    // Process profile picture
-    const buffer = await fileToBuffer(profilePic);
-    
-    // Create new user
-    const user = await User.create({
-      name,
-      email,
-      password,
-      profilePic: {
-        data: buffer,
-        contentType: profilePic.type,
-      },
-    });
-    
-    // Generate JWT token
-    const token = jwt.sign(
-      { id: user._id, email: user.email, name: user.name },
-      JWT_SECRET,
-      { expiresIn: '7d' }
-    );
-    
-    // Return success response with token
-    return NextResponse.json({
-      message: 'User registered successfully',
-      token,
-      user: {
-        id: user._id,
-        name: user.name,
-        email: user.email,
-      },
-    });
+    try {
+      // Process profile picture
+      const buffer = await fileToBuffer(profilePic);
+      
+      // Create new user
+      const user = await User.create({
+        name,
+        email,
+        password,
+        profilePic: {
+          data: buffer,
+          contentType: profilePic.type,
+        },
+      });
+      
+      // Generate JWT token
+      const token = jwt.sign(
+        { id: user._id, email: user.email, name: user.name },
+        JWT_SECRET,
+        { expiresIn: '7d' }
+      );
+      
+      // Return success response with token
+      return NextResponse.json({
+        message: 'User registered successfully',
+        token,
+        user: {
+          id: user._id,
+          name: user.name,
+          email: user.email,
+        },
+      });
+    } catch (innerError) {
+      console.error('Error during user creation:', innerError);
+      return NextResponse.json(
+        { message: innerError instanceof Error ? innerError.message : 'Error creating user' },
+        { status: 500 }
+      );
+    }
     
   } catch (error) {
-    console.error('Registration error:', error);
+    console.error('Registration error details:', error);
     return NextResponse.json(
-      { message: 'Internal server error' },
+      { message: error instanceof Error ? error.message : 'Internal server error' },
       { status: 500 }
     );
   }
-} 
+}
