@@ -19,10 +19,13 @@ import {
   FaCog,
   FaBed,
   FaArrowLeft,
-  FaHome
+  FaHome,
+  FaEdit,
+  FaShieldAlt
 } from 'react-icons/fa';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
+import { AnimatePresence, motion } from 'framer-motion';
 
 export default function ProfilePage() {
   const router = useRouter();
@@ -30,6 +33,7 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('profile');
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     // Check if user is logged in
@@ -135,47 +139,81 @@ export default function ProfilePage() {
     switch(activeTab) {
       case 'profile':
         return (
-          <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
-            <h3 className="text-xl font-semibold mb-4">Personal Information</h3>
+          <div className="bg-white rounded-lg shadow-md p-6 sm:p-8">
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-2xl font-semibold text-gray-900">Personal Information</h3>
+              <button 
+                onClick={() => setIsEditing(true)}
+                className="flex items-center px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700 hover:bg-blue-50 rounded-lg transition-colors"
+              >
+                <FaEdit className="mr-2" />
+                Edit Profile
+              </button>
+            </div>
             
-            <div className="grid grid-cols-1 gap-y-6 sm:grid-cols-2 sm:gap-x-8">
-              <div>
+            <div className="grid grid-cols-1 gap-y-8 sm:grid-cols-2 sm:gap-x-8">
+              <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Full Name</label>
-                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 rounded-md">
-                  {user?.name}
+                <div className="mt-1 p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                  {user?.name || 'Not specified'}
                 </div>
               </div>
               
-              <div>
+              <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Email</label>
-                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 rounded-md truncate">
-                  {user?.email}
+                <div className="mt-1 p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900 truncate">
+                  {user?.email || 'Not specified'}
                 </div>
               </div>
               
-              <div>
+              <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Phone Number</label>
-                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 rounded-md">
-                  +1 (555) 123-4567
+                <div className="mt-1 p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                  {user?.phone || '+1 (555) 123-4567'}
                 </div>
               </div>
               
-              <div>
+              <div className="space-y-2">
                 <label className="block text-sm font-medium text-gray-700">Member Since</label>
-                <div className="mt-1 p-2 bg-gray-50 border border-gray-200 rounded-md">
-                  June 2023
+                <div className="mt-1 p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                  {user?.memberSince || 'June 2023'}
+                </div>
+              </div>
+
+              <div className="space-y-2 sm:col-span-2">
+                <label className="block text-sm font-medium text-gray-700">Address</label>
+                <div className="mt-1 p-3 bg-gray-50 border border-gray-200 rounded-lg text-gray-900">
+                  {user?.address || '123 Main Street, Anytown, ST 12345'}
                 </div>
               </div>
             </div>
-            
-            <div className="mt-6">
-              <button className="w-full sm:w-auto px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors">
-                Edit Information
-              </button>
+
+            <div className="mt-8 border-t border-gray-200 pt-6">
+              <h4 className="text-lg font-medium text-gray-900 mb-4">Account Settings</h4>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Two-Factor Authentication</p>
+                    <p className="text-sm text-gray-500">Add an extra layer of security to your account</p>
+                  </div>
+                  <button className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+                    Enable
+                  </button>
+                </div>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-900">Email Notifications</p>
+                    <p className="text-sm text-gray-500">Receive updates about your bookings</p>
+                  </div>
+                  <button className="px-4 py-2 text-sm font-medium text-blue-600 hover:text-blue-700">
+                    Manage
+                  </button>
+                </div>
+              </div>
             </div>
           </div>
         );
-        
+
       case 'bookings':
         return (
           <div className="bg-white rounded-lg shadow-md p-4 sm:p-6">
@@ -451,169 +489,198 @@ export default function ProfilePage() {
 
   // Navigation items array for easier maintenance
   const navigationItems = [
-    { id: 'profile', name: 'Personal Information', icon: FaUser },
-    { id: 'bookings', name: 'My Bookings', icon: FaCalendarAlt },
-    { id: 'history', name: 'Past Stays', icon: FaHistory },
-    { id: 'payment', name: 'Payment Methods', icon: FaCreditCard },
-    { id: 'loyalty', name: 'Loyalty & Rewards', icon: FaGem },
-    { id: 'preferences', name: 'Preferences', icon: FaCog },
-    { id: 'notifications', name: 'Notifications', icon: FaBell },
+    { 
+      category: 'Account',
+      items: [
+        { id: 'profile', name: 'Personal Information', icon: FaUser },
+        { id: 'security', name: 'Security Settings', icon: FaShieldAlt },
+        { id: 'preferences', name: 'Preferences', icon: FaCog },
+      ]
+    },
+    {
+      category: 'Bookings & History',
+      items: [
+        { id: 'bookings', name: 'Current Bookings', icon: FaCalendarAlt },
+        { id: 'history', name: 'Past Stays', icon: FaHistory },
+      ]
+    },
+    {
+      category: 'Payments & Rewards',
+      items: [
+        { id: 'payment', name: 'Payment Methods', icon: FaCreditCard },
+        { id: 'loyalty', name: 'Loyalty Program', icon: FaGem },
+      ]
+    }
   ];
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <motion.div 
+          initial={{ scale: 0.8, opacity: 0 }}
+          animate={{ scale: 1, opacity: 1 }}
+          className="p-8 rounded-lg bg-white shadow-lg"
+        >
+          <div className="animate-spin rounded-full h-16 w-16 border-t-4 border-b-4 border-blue-600"></div>
+          <p className="mt-4 text-gray-600">Loading your profile...</p>
+        </motion.div>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="min-h-screen bg-gray-50">
       <Navbar />
-      <div className="min-h-screen bg-gray-50 flex flex-col">
-        {/* Mobile Tab Indicator - Visible on very small screens */}
-        <div className="md:hidden fixed top-16 left-0 w-full bg-white z-20 shadow-sm">
-          <div className="flex items-center p-2">
-            <button
-              onClick={() => setSidebarOpen(!sidebarOpen)}
-              className="p-2 rounded-md text-gray-500 hover:text-gray-900 focus:outline-none mr-2"
-            >
-              {sidebarOpen ? <FaTimes className="h-5 w-5" /> : <FaBars className="h-5 w-5" />}
-            </button>
-            <h2 className="text-lg font-semibold truncate">
-              {navigationItems.find(item => item.id === activeTab)?.name || 'Profile'}
-            </h2>
-            <Link 
-              href="/"
-              className="ml-auto p-2 rounded-md text-blue-600 hover:text-blue-700 focus:outline-none flex items-center"
-            >
-              <FaHome className="h-5 w-5" />
-              <span className="sr-only md:not-sr-only md:ml-1">Home</span>
-            </Link>
-          </div>
-        </div>
-
-        {/* Mobile sidebar backdrop */}
-        {sidebarOpen && (
-          <div 
-            className="md:hidden fixed inset-0 bg-gray-600 bg-opacity-75 z-30"
-            onClick={() => setSidebarOpen(false)}
-          ></div>
-        )}
-
-        <div className="flex pt-16 flex-1">
-          {/* Sidebar */}
-          <div 
-            className={`fixed inset-y-0 pt-28 md:pt-16 left-0 flex flex-col z-40 transition-all duration-300 transform bg-white shadow-lg md:translate-x-0 ${
-              sidebarOpen ? 'translate-x-0' : '-translate-x-full'
-            } w-64`}
+      
+      {/* Mobile Header */}
+      <div className="lg:hidden fixed top-16 left-0 right-0 bg-white z-30 border-b border-gray-200">
+        <div className="flex items-center justify-between p-4">
+          <button
+            onClick={() => setSidebarOpen(!sidebarOpen)}
+            className="p-2 rounded-lg hover:bg-gray-100"
           >
-            {/* Go back button - visible at the top of sidebar */}
-            <div className="px-3 py-2 border-b border-gray-200">
-              <Link 
-                href="/"
-                className="flex items-center w-full px-3 py-2 text-sm font-medium rounded-md text-blue-600 hover:bg-blue-50 transition-colors"
-              >
-                <FaArrowLeft className="mr-2 h-4 w-4" />
-                Back to Home
-              </Link>
-            </div>
-            
-            {/* User profile summary */}
-            <div className="flex flex-col items-center px-4 py-6 border-b">
-              {user?.profilePic ? (
-                <div className="relative w-20 h-20 rounded-full overflow-hidden border-4 border-blue-200">
-                  <Image 
-                    src={user.profilePic} 
-                    alt={user.name}
-                    fill
-                    className="object-cover"
-                  />
-                </div>
-              ) : (
-                <div className="w-20 h-20 rounded-full bg-blue-600 flex items-center justify-center text-white text-3xl font-bold">
-                  {user?.name?.charAt(0)}
-                </div>
-              )}
-              <h3 className="mt-4 text-lg font-medium">{user?.name}</h3>
-              <p className="text-sm text-gray-500 truncate max-w-full">{user?.email}</p>
-            </div>
-            
-            {/* Navigation */}
-            <nav className="mt-4 px-3 flex-1 overflow-y-auto">
-              <div className="space-y-1">
-                {navigationItems.map((item) => (
-                  <button
-                    key={item.id}
-                    onClick={() => {
-                      setActiveTab(item.id);
-                      if (window.innerWidth < 768) {
-                        setSidebarOpen(false);
-                      }
-                    }}
-                    className={`w-full flex items-center px-3 py-3 text-sm font-medium rounded-md transition-colors ${
-                      activeTab === item.id 
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
-                    }`}
+            {sidebarOpen ? <FaTimes size={20} /> : <FaBars size={20} />}
+          </button>
+          <h1 className="text-lg font-semibold">
+            {navigationItems.find(cat => 
+              cat.items.find(item => item.id === activeTab)
+            )?.items.find(item => item.id === activeTab)?.name || 'Profile'}
+          </h1>
+          <Link href="/" className="p-2 rounded-lg hover:bg-gray-100">
+            <FaHome size={20} />
+          </Link>
+        </div>
+      </div>
+
+      {/* Sidebar Backdrop */}
+      <AnimatePresence>
+        {sidebarOpen && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 bg-black bg-opacity-50 lg:hidden z-40"
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+      </AnimatePresence>
+
+      <div className="flex pt-16">
+        {/* Sidebar */}
+        <motion.aside
+          initial={{ x: -300 }}
+          animate={{ x: sidebarOpen ? 0 : -300 }}
+          className={`fixed left-0 top-0 h-full w-72 bg-white shadow-xl z-50 lg:relative lg:translate-x-0 transition-transform duration-300 ease-in-out`}
+        >
+          <div className="flex flex-col h-full">
+            {/* User Profile Section */}
+            <div className="p-6 border-b border-gray-200">
+              <div className="flex items-center space-x-4">
+                <div className="relative w-16 h-16">
+                  {user?.profilePic ? (
+                    <Image
+                      src={user.profilePic}
+                      alt={user.name}
+                      fill
+                      className="rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="w-16 h-16 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 flex items-center justify-center text-white text-2xl">
+                      {user?.name?.charAt(0)}
+                    </div>
+                  )}
+                  <button 
+                    className="absolute bottom-0 right-0 bg-blue-600 rounded-full p-1 text-white hover:bg-blue-700"
+                    onClick={() => setIsEditing(true)}
                   >
-                    <item.icon className={`mr-3 h-5 w-5 ${
-                      activeTab === item.id ? 'text-blue-500' : 'text-gray-400'
-                    }`} />
-                    <span>{item.name}</span>
-                    {activeTab === item.id && (
-                      <span className="ml-auto w-1.5 h-1.5 rounded-full bg-blue-500"></span>
-                    )}
+                    <FaEdit size={12} />
                   </button>
-                ))}
+                </div>
+                <div>
+                  <h2 className="text-lg font-semibold">{user?.name}</h2>
+                  <p className="text-sm text-gray-500">{user?.email}</p>
+                </div>
               </div>
+            </div>
+
+            {/* Navigation */}
+            <nav className="flex-1 overflow-y-auto p-4">
+              {navigationItems.map((category) => (
+                <div key={category.category} className="mb-6">
+                  <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">
+                    {category.category}
+                  </h3>
+                  <div className="space-y-1">
+                    {category.items.map((item) => (
+                      <button
+                        key={item.id}
+                        onClick={() => {
+                          setActiveTab(item.id);
+                          if (window.innerWidth < 1024) setSidebarOpen(false);
+                        }}
+                        className={`w-full flex items-center px-4 py-3 rounded-lg transition-colors ${
+                          activeTab === item.id
+                            ? 'bg-blue-50 text-blue-700'
+                            : 'text-gray-600 hover:bg-gray-50'
+                        }`}
+                      >
+                        <item.icon className={`w-5 h-5 ${
+                          activeTab === item.id ? 'text-blue-500' : 'text-gray-400'
+                        }`} />
+                        <span className="ml-3">{item.name}</span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              ))}
             </nav>
-            
-            {/* Logout button */}
-            <div className="px-3 py-4 border-t">
+
+            {/* Logout Button */}
+            <div className="p-4 border-t border-gray-200">
               <button
                 onClick={handleLogout}
-                className="w-full flex items-center px-3 py-3 text-sm font-medium rounded-md text-red-600 hover:bg-red-50 transition-colors"
+                className="w-full flex items-center justify-center px-4 py-3 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               >
-                <FaSignOutAlt className="mr-3 h-5 w-5" />
+                <FaSignOutAlt className="w-5 h-5 mr-2" />
                 Sign out
               </button>
             </div>
           </div>
-          
-          {/* Main content area */}
-          <div className={`flex-1 transition-all duration-300 ${sidebarOpen ? 'md:ml-64' : ''}`}>
-            <div className="px-4 sm:px-6 lg:px-8 py-6 pt-16 md:pt-6">
-              {/* Desktop Page header */}
-              <div className="hidden md:flex justify-between items-center mb-6">
-                <h1 className="text-2xl font-bold">
-                  {navigationItems.find(item => item.id === activeTab)?.name || 'Profile'}
-                </h1>
-                
-                {/* Desktop back button and sidebar toggle */}
-                <div className="flex items-center space-x-2">
-                  <Link 
-                    href="/"
-                    className="flex items-center px-3 py-1.5 text-sm bg-white border border-gray-300 rounded-md hover:bg-gray-50 transition-colors"
-                  >
-                    <FaArrowLeft className="mr-1.5 h-4 w-4" />
-                    Back to Website
-                  </Link>
-                  <button
-                    onClick={() => setSidebarOpen(!sidebarOpen)}
-                    className="p-2 rounded-md text-gray-500 hover:text-gray-900 focus:outline-none"
-                  >
-                    {sidebarOpen ? (
-                      <FaArrowLeft className="h-5 w-5" />
-                    ) : (
-                      <FaBars className="h-5 w-5" />
-                    )}
-                  </button>
-                </div>
-              </div>
-              
-              {/* Page content */}
-              <div className="mt-4 md:mt-0 mb-8">
-                {renderProfileContent()}
-              </div>
+        </motion.aside>
+
+        {/* Main Content */}
+        <main className={`flex-1 p-4 lg:p-8 transition-all duration-300 ${sidebarOpen ? 'lg:ml-72' : ''}`}>
+          <div className="max-w-4xl mx-auto">
+            {/* Desktop Header */}
+            <div className="hidden lg:flex justify-between items-center mb-8">
+              <h1 className="text-2xl font-bold text-gray-900">
+                {navigationItems.find(cat => 
+                  cat.items.find(item => item.id === activeTab)
+                )?.items.find(item => item.id === activeTab)?.name || 'Profile'}
+              </h1>
+              <Link
+                href="/"
+                className="flex items-center px-4 py-2 text-gray-600 hover:text-gray-900"
+              >
+                <FaArrowLeft className="mr-2" />
+                Back to Home
+              </Link>
             </div>
+
+            {/* Content Sections */}
+            <motion.div
+              key={activeTab}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
+              className="bg-white rounded-xl shadow-sm border border-gray-200"
+            >
+              {renderProfileContent()}
+            </motion.div>
           </div>
-        </div>
+        </main>
       </div>
       <Footer />
-    </>
+    </div>
   );
-} 
+}
