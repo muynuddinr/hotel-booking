@@ -2,7 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { FaLock, FaCheckCircle, FaCreditCard, FaSpinner } from 'react-icons/fa';
+import { FaLock, FaCheckCircle, FaCreditCard, FaSpinner, FaHome, FaCalendarAlt } from 'react-icons/fa';
 import Navbar from '../Components/Navbar';
 import Footer from '../Components/Footer';
 
@@ -11,9 +11,27 @@ export default function PaymentProcessingPage() {
   const [stage, setStage] = useState(1);
   const [bookingData, setBookingData] = useState<any>(null);
   const [bookingId, setBookingId] = useState('');
+  const [showNavChoice, setShowNavChoice] = useState(false);
+
+  const handleNavigation = (path: string) => {
+    // Clear the pending booking data
+    localStorage.removeItem('pendingBooking');
+    
+    // Store booking in localStorage
+    const userBookings = JSON.parse(localStorage.getItem('userBookings') || '[]');
+    userBookings.push({
+      ...bookingData,
+      bookingId,
+      bookingDate: new Date().toISOString(),
+      status: 'Confirmed'
+    });
+    localStorage.setItem('userBookings', JSON.stringify(userBookings));
+    
+    // Navigate to chosen path
+    router.push(path);
+  };
 
   useEffect(() => {
-    // Get booking data from localStorage
     const storedBookingData = localStorage.getItem('pendingBooking');
     if (!storedBookingData) {
       router.push('/rooms');
@@ -23,41 +41,21 @@ export default function PaymentProcessingPage() {
     try {
       const parsedData = JSON.parse(storedBookingData);
       setBookingData(parsedData);
-      
-      // Generate a random booking ID
       setBookingId(`BK-${Math.floor(Math.random() * 1000000)}`);
 
-      // Simulate payment processing stages
-      const timer1 = setTimeout(() => setStage(2), 2000); // Verifying payment
-      const timer2 = setTimeout(() => setStage(3), 4000); // Processing payment
-      const timer3 = setTimeout(() => setStage(4), 6000); // Confirming booking
-      const timer4 = setTimeout(() => setStage(5), 8000); // Success
-      
-      // Redirect to confirmation page after success
-      const timer5 = setTimeout(() => {
-        // Clear the pending booking data
-        localStorage.removeItem('pendingBooking');
-        
-        // Store booking in localStorage (in a real app, this would be saved to a database)
-        const userBookings = JSON.parse(localStorage.getItem('userBookings') || '[]');
-        userBookings.push({
-          ...parsedData,
-          bookingId,
-          bookingDate: new Date().toISOString(),
-          status: 'Confirmed'
-        });
-        localStorage.setItem('userBookings', JSON.stringify(userBookings));
-        
-        // Redirect to bookings page
-        router.push('/bookings');
-      }, 10000);
+      const timer1 = setTimeout(() => setStage(2), 2000);
+      const timer2 = setTimeout(() => setStage(3), 4000);
+      const timer3 = setTimeout(() => setStage(4), 6000);
+      const timer4 = setTimeout(() => {
+        setStage(5);
+        setTimeout(() => setShowNavChoice(true), 1000);
+      }, 8000);
 
       return () => {
         clearTimeout(timer1);
         clearTimeout(timer2);
         clearTimeout(timer3);
         clearTimeout(timer4);
-        clearTimeout(timer5);
       };
     } catch (error) {
       console.error('Error parsing booking data:', error);
@@ -236,28 +234,32 @@ export default function PaymentProcessingPage() {
           </div>
         </div>
       </div>
-      <Footer />
-
-      {/* Success animation */}
-      {stage === 5 && (
-        <div className="fixed inset-0 pointer-events-none flex items-center justify-center">
+      {showNavChoice && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <motion.div
-            initial={{ scale: 0 }}
-            animate={{ scale: [0, 1.2, 1] }}
-            transition={{ duration: 0.8, times: [0, 0.6, 1] }}
-            className="w-full h-full max-w-md max-h-md"
+            initial={{ scale: 0.9, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            className="bg-white rounded-lg p-8 max-w-md w-full mx-4 shadow-xl"
           >
-            <svg className="checkmark" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 52 52">
-              <circle className="checkmark__circle" cx="26" cy="26" r="25" fill="none"/>
-              <motion.path
-                className="checkmark__check"
-                fill="none"
-                d="M14.1 27.2l7.1 7.2 16.7-16.8"
-                initial={{ pathLength: 0 }}
-                animate={{ pathLength: 1 }}
-                transition={{ duration: 0.5, delay: 0.3 }}
-              />
-            </svg>
+            <h2 className="text-2xl font-bold text-center mb-6">
+              Where would you like to go?
+            </h2>
+            <div className="flex flex-col space-y-4">
+              <button
+                onClick={() => handleNavigation('/bookings')}
+                className="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition duration-200 flex items-center justify-center space-x-2"
+              >
+                <FaCalendarAlt />
+                <span>View My Bookings</span>
+              </button>
+              <button
+                onClick={() => handleNavigation('/')}
+                className="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition duration-200 flex items-center justify-center space-x-2"
+              >
+                <FaHome />
+                <span>Return to Home</span>
+              </button>
+            </div>
           </motion.div>
         </div>
       )}
