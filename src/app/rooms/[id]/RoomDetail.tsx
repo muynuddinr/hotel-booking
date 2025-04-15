@@ -105,7 +105,7 @@ const RoomDetail: React.FC<{ id: string }> = ({ id }) => {
                   href={`/rooms/${room._id}`}
                   className="mt-4 block w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-6 rounded-md text-center transition-colors duration-300"
                 >
-                  View Details
+                  make payment
                 </Link>
               </div>
             </div>
